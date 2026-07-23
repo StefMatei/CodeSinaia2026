@@ -25,14 +25,24 @@ def main() -> None:
         # to do c++ swap() in python you can do a,b=b,a
 
         with conn:
-            print(f"Connection from {addr}")
-            encrypted_data = conn.recv(4096)
-            message = decrypt(encrypted_data, KEY)
 
-            print(f"Received from client: {message}")
+            while True:
+                print(f"Connection from {addr}")
+                encrypted_data = conn.recv(4096)
+                received_message = decrypt(encrypted_data, KEY)
 
-            response = f"Echo: {message}"
-            conn.sendall(encrypt(response, KEY))
+                if(received_message == "quit"):
+                    break
+
+                print(f"Received from client: {received_message}")
+
+                print("Awaiting input: ")
+                sending_message = str(input())
+
+                conn.sendall(encrypt(sending_message, KEY))
+
+                if(sending_message == "quit"):
+                    break
 
             print("Sent encrypted message!")
 

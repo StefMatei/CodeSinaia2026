@@ -18,13 +18,23 @@ def main() -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
         client_socket.connect((HOST,PORT))
 
-        message = "Hello World"
-        client_socket.sendall(encrypt(message, KEY))
+        while True:
 
-        print(f"Sent {message}")
+            print("Awaiting input: ")
+            message = str(input())
 
-        encrypted_response = client_socket.recv(4096)
-        print ("DECODED message: ", decrypt(encrypted_response, KEY))
+            client_socket.sendall(encrypt(message, KEY))
+
+            if(message == "quit"):
+                break
+
+            print(f"Sent {message}")
+
+            encrypted_response = client_socket.recv(4096)
+            print ("DECODED message: ", decrypt(encrypted_response, KEY))
+
+            if(decrypt(encrypted_response, KEY) == "quit"):
+                break
 
 if __name__ == "__main__":
     main()

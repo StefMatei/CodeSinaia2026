@@ -346,8 +346,6 @@ class App:
                 color = "#33cc33"
             else:
                 color = "#cc4033"
-
-            color = None
             
             status_text = "Online" if is_online else "Offline"
             tk.Button(

@@ -10,7 +10,19 @@ from argon2.exceptions import InvalidHashError, VerifyMismatchError
 #region Socket
 #TODO: Creati conexiunea socket
 
+HOST="0.0.0.0"
+PORT=3000
+KEY="parola"
+
 #TODO: dati bind pe 0.0.0.0 si portul 3000, apoi listen
+
+def socket_conn() -> None:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server_socket.bind((HOST,PORT))
+        server_socket.listen(1)
+
+
 clients = {}  # dictionar pentru clientii conectati {username: {"conn": conn, "lock": Lock, "user_id": id}}
 clients_lock = threading.Lock()
 #endregion
@@ -93,6 +105,14 @@ def recv_packet(conn, buffer):
                 Vei avea o variabila chunk care primeste 4MB.Trateaza cazul daca chunk e gol sa returnezi none si buffer.
                 Variabila buffer va contine toate chunk urile"""
 
+    while b"\n" not in buffer:
+        chunk = conn.recv(4096)
+
+        if not chunk:
+            return None, buffer
+
+        buffer += chunk
+
 
     raw_line, buffer = buffer.split(b"\n", 1)
     if not raw_line:
@@ -107,7 +127,7 @@ def recv_packet(conn, buffer):
 def user_pair(id1, id2):
     """TODO: Aranjeaza cele doua id-uri in ordine stabila (user1 < user2), la fel
     ca in baza de date, si returneaza-le ca tuple (user1, user2)"""
-    pass
+    return (id1, id2) if id1 < id2 else (id2, id1)
 
 
 def get_online(username):
@@ -126,6 +146,13 @@ def get_msg(conn):
         Adauga un break daca nu exista obiectul payload si 
         un continue daca payload e gol"""
 
+        payload, message = recv_packet(conn, buffer)
+
+        if payload is None:
+            break
+
+        if not payload:
+            continue
 
         msg_type = str(payload.get("type", "")).upper()
         print(f"Mesaj primit: {msg_type}")
@@ -134,7 +161,7 @@ def get_msg(conn):
             user = payload.get("username", "").strip()
             password = payload.get("password", "")
             #TODO: daca nu exista user sau parola trimite un json de tip ERROR si dupa continua
-
+            
 
             cursor.execute("SELECT id, password FROM users WHERE username=?", (user,))
             row = cursor.fetchone()
